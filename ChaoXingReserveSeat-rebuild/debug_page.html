@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+  <meta name="format-detection" content="telephone=no">
+  <title>座位预约</title>
+<base href="https://office.chaoxing.com/">
+<script type="text/javascript">
+  var photoUrl = 'http://photo.chaoxing.com'
+  var panUrl = 'http://pan-yz.chaoxing.com'
+  var noteUrl = 'http://noteyd.chaoxing.com'
+  var staticDomain = 'https://office-static.chaoxing.com/r/'
+  photoUrl = document.location.protocol + photoUrl.split(":")[1]
+  panUrl = document.location.protocol + panUrl.split(":")[1]
+  noteUrl = document.location.protocol + noteUrl.split(":")[1]
+  if (staticDomain !== '') {
+    staticDomain = document.location.protocol + staticDomain.split(":")[1]
+  }
+</script>
+
+<link rel="stylesheet" href="https://office-static.chaoxing.com/r/staticreserve/style/reset.css">
+<link rel="stylesheet" href="https://office-static.chaoxing.com/r/staticreserve/style/apps/seat/seat.css">
+<link rel="stylesheet" href="https://office-static.chaoxing.com/r/staticreserve/style/apps/reserve/iphonex.css">
+<link rel="stylesheet" href="https://office-static.chaoxing.com/r/staticreserve/style/apps/reserve/reserve_mobile.css">
+<script src="https://office-static.chaoxing.com/r/staticreserve/js/lib/jquery/jquery.min.js"></script>
+<script src="https://office-static.chaoxing.com/r/staticreserve/js/lib/wy/YiDunProtector-Web-2.1.4.js"></script>
+<script>document.write("<script src='https://captcha.chaoxing.com/load-d.min.js?t=" + parseInt(Date.now()/60000) + "'><\/script>");</script>
+<script>document.write("<script src='https://captcha.chaoxing.com/light.js?t=" + parseInt(Date.now()/60000) + "'><\/script>");</script>
+<script type="text/javascript" src="//api.map.baidu.com/api?type=webgl&v=1.0&ak=p7HrxjMD6R1hbPFP9sNgkfHjsNZumBai"></script>
+<script>document.write("<script src='https://cstaticdun.126.net/load.min.js?t=" + parseInt(Date.now()/60000) + "'><\/script>");</script>
+<script type="text/javascript" src="https://office-static.chaoxing.com/r/staticreserve/js/lib/requirejs/require.min.js"></script>
+<script type="text/javascript" src="https://office-static.chaoxing.com/r/staticreserve/js/src/front/apps/seat/main.js?t=2025090420"></script>
+<script>requirejs.config({urlArgs: 't=2025090420'})</script>
+  <style>
+    body{
+      height: 100vh;
+      overflow: hidden;
+    }
+    .u-layer {
+      position: fixed;
+      top: 50%;
+      left: 53%;
+      margin-top: -150px;
+      margin-left: -161px;
+      display: none;
+      z-index: 100000;
+    }
+  </style>
+</head>
+<body>
+<div class="canuse" v-cloak>
+  <div v-if="!submitsuccess" style="height: 100%">
+    <div class="can_top">
+      <div class="can_top_info">
+        <p class="can_top_title owt1">{{seatRoom.firstLevelName}}<span v-if="seatRoom.secondLevelName">-{{seatRoom.secondLevelName}}</span><span v-if="seatRoom.thirdLevelName">-{{seatRoom.thirdLevelName}}</span>
+          <label>{{chosedSeatNum}}<span>座位</span></label></p>
+        <h6 class="can_top_type">目前无人使用</h6>
+        <p class="can_top_word">您可直接进行预约</p>
+      </div>
+    </div>
+    <p class="gray_border"></p>
+    <div class="can_cont">
+      <h6 class="site_title">请选择结束时间</h6>
+      <ul class="time_data">
+        <li class="time_cell" :class="[data.cls]" v-for="(data,index) in dynamicTimes" @click="choseTime(data,index)">{{data.time}}</li>
+      </ul>
+    </div>
+    <div class="can_btm">
+      <p class="can_submit" @click="submit">开始使用</p>
+    </div>
+    
+    <div class="screenMask" style="z-index: 2" v-if="captchaShow"></div>
+    
+    <div class="number_validator_pop" v-show="captchaShow">
+      <div class="number_validator_top">请完成安全验证 <span class="nvp_close" @click="captchaShow=false"></span></div>
+      <div class="number_validator_cont">
+        
+        <div class="nvc_area"><img style="width: 100%;height: 100%" @click="loadCaptcha" v-show="captchaLoadSuccess" :src="captchaUrl"></div>
+        <div class="nvc_text">
+          <input type="text" class="nvc_input" v-model="captcha" placeholder="请输入上图中的数字"/>
+          <p class="nvc_tip" style="display: none">验证码错误，请重试</p>
+        </div>
+      </div>
+      <div class="number_validator_bottom">
+        <p class="nvb_sure" :class="{noClick: $.trim(captcha).length==0}" @click="captchaSubmit">确定</p>
+      </div>
+    </div>
+    <div id="cxCaptcha"></div>
+  </div>
+  <div v-if="submitsuccess">
+    <div class="success">
+      <div class="suc_top">
+        <h6 class="suc_time">{{seatReserve.startTime |format('HH:mm')}}-{{seatReserve.endTime | format('HH:mm')}}<span>{{seatReserve.duration}}小时</span></h6>
+        <dl class="suc_info">
+          <dt>
+            <p class="suc_addr">
+              {{seatReserve.firstLevelName}}-<span v-if="seatReserve.secondLevelName">-{{seatReserve.secondLevelName}}</span><span v-if="seatReserve.thirdLevelName">-{{seatReserve.thirdLevelName}}</span>
+            </p>
+            <p class="suc_day">{{seatReserve.startTime |format('YYYY-MM-DD')}} <span>{{getWeekStr(seatReserve.startTime)}}</span></p>
+          </dt>
+          <dd>
+            <p class="suc_code">座位编号</p>
+            <p class="suc_num">{{seatReserve.seatNum}}</p>
+          </dd>
+        </dl>
+      </div>
+      <div class="suc_cont">
+        <div class="suc_icon"></div>
+        <p class="suc_type_word">预约成功</p>
+        <p class="suc_type_info" v-if="seatConfig.reserveMode === 0">
+          请在<span>{{ lessSignTime |format('HH:mm') }}</span>至<span>{{ lastSignTime |format('HH:mm') }}</span>时间内完成签到，否则将被记录违约
+        </p>
+        <p class="suc_type_info" v-else>请在闭馆前完成签到,签到后如需离开可随时扫码退座</p>
+      </div>
+      <div class="suc_btm">
+        <p class="suc_btn" @click="know">我知道了</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="screenMask" style="z-index: 3" v-if="bindSnoShow"></div>
+  
+  <div class="reminder_pop" style="z-index: 4" v-if="bindSnoShow">
+    <h6 class="rp_top">绑定提示</h6>
+    <div class="rp_cont">
+      <p class="rp_cont_word">您未绑定学工号/一卡通账号，无法使用全部功能，请绑定后再预约</p>
+    </div>
+    <div class="rp_bottom">
+      <span class="rp_cal" @click="know()">取消</span>
+      <span class="rp_sure" @click="goBindSno()">去绑定</span>
+    </div>
+  </div>
+  <input type="hidden" id="submit_enc" value="837d449a00e847458e2bc1ea49c42462_352936829"/>
+</div>
+<script>
+  var roomId = '6385',
+      seatNum = '429',
+      serverNow = new Date(),
+      fidEnc = '4343836c4ce31040',
+      uniqueDomainPath = '',
+      bindSno = 'false',
+      bindSnoUrl = ''
+</script>
+<script  src="https://office-static.chaoxing.com/r/staticreserve/js/src/front/apps/seat/submit/nobody/third/code_nobody_third.js?t=2025090420"></script>
+<script type="text/javascript">
+  require(['lever', 'ratio'], function (AlloyLever) {
+    'use strict'
+    AlloyLever.config({cdn: 'https://office-static.chaoxing.com/r/staticreserve/js/lib/lever/vconsole.min.js'})
+  })
+</script>
+</body>
+</html>
